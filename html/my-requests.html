@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Requests</title>
+    <link rel="stylesheet" href="../style/home.css">
+    <style>
+        .request-card { background-color: #1e2433; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+        .req-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background-color: #f59e0b20; color: #fbbf24; }
+        .status-completed { background-color: #22c55e20; color: #4ade80; }
+        .status-processing { background-color: #3b82f620; color: #60a5fa; }
+        .dl-btn { background-color: #22c55e; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .dl-btn:hover { background-color: #16a34a; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">My Dashboard</div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="./home.html" style="color: white; text-decoration: none; margin-right: 1rem;">Back to Store</a>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <main class="content" style="max-width: 800px; margin: 0 auto;">
+        <h2 style="margin-bottom: 2rem;">My Script Requests</h2>
+        <div id="myRequestsList">
+            <p style="color: #94a3b8;">Loading your requests...</p>
+        </div>
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../script.js"></script>
+</body>
+</html>

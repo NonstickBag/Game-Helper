@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Item</title>
+    <link rel="stylesheet" href="../style/payment.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="payment-container">
+            
+            <div class="top-bar">
+                <a href="./home.html" class="back-arrow">←</a>
+                <h2>Premium Purchasing</h2>
+            </div>
+
+            <div class="progress-tracker">
+                <div class="step-item">
+                    <div id="circlePayment" class="step-circle active">💳</div>
+                    <span id="textPayment" class="step-text active">Payment</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="step-item">
+                    <div id="circleUpload" class="step-circle">📤</div>
+                    <span id="textUpload" class="step-text">Upload</span>
+                </div>
+            </div>
+
+            <div id="paymentSummary"></div>
+
+            <div id="paymentFormContainer">
+                
+                <!-- STEP 1: PAYMENT SELECTION -->
+                <div id="paymentSection">
+                    <div class="step-header">
+                        <p class="step-label">Step 1</p>
+                        <p class="instruction">Choose the account to transfer money.</p>
+                    </div>
+
+                    <div class="payment-cards-grid">
+                        <div class="pay-card" id="card-kpay" onclick="selectPayment('kpay')">
+                            <div class="pay-logo logo-kpay">KBZ<br>Pay</div>
+                            <div class="pay-details">
+                                <h4>Kpay</h4>
+                                <p class="name">Nyi Thu Yein Tun</p>
+                                <p class="phone">09441385828</p>
+                            </div>
+                            <div class="pay-actions">
+                                <button type="button" class="icon-btn" onclick="event.stopPropagation(); copyText('09441385828')" title="Copy Number">⎘</button>
+                            </div>
+                        </div>
+
+                        <div class="pay-card" id="card-ayapay" onclick="selectPayment('ayapay')">
+                            <div class="pay-logo logo-ayapay">AYA<br>PAY</div>
+                            <div class="pay-details">
+                                <h4>Ayapay</h4>
+                                <p class="name">Nyi Thu Yein Tun</p>
+                                <p class="phone">09441385828</p>
+                            </div>
+                            <div class="pay-actions">
+                                <button type="button" class="icon-btn" onclick="event.stopPropagation(); copyText('09441385828')" title="Copy Number">⎘</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="notice-text">For more details, you can call us at: <br>09441385828</p>
+
+                    <div class="bottom-bar">
+                        <a href="./home.html" class="btn-back">Back</a>
+                        <button type="button" id="nextStepBtn" class="btn-next" onclick="showUploadStep()" disabled>NEXT STEP</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: UPLOAD RECEIPT -->
+                <form id="paymentForm" style="display: none;">
+                    <div class="step-header">
+                        <p class="step-label">Step 2</p>
+                        <p class="instruction">Please upload your transaction screenshot.</p>
+                    </div>
+
+                    <div class="upload-box">
+                        <input type="file" id="receiptFile" accept="image/*" required>
+                    </div>
+
+                    <div class="bottom-bar">
+                        <button type="button" class="btn-back" onclick="showPaymentStep()">Back</button>
+                        <button type="submit" class="btn-next">CONFIRM</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 3: SUCCESS -->
+            <div id="paymentSuccess" style="display: none;">
+                <h3>Payment Received!</h3>
+                <p style="color: #94a3b8; margin-bottom: 2rem;">Thank you for your purchase. Your C# script is ready.</p>
+                <button id="downloadBtn" class="download-btn">Download Script</button>
+                <br>
+                <a href="./home.html" style="color: #e11d48; text-decoration: none; font-size: 0.9rem;">Return to Dashboard</a>
+            </div>
+
+            <button id="logoutBtn" style="display: none;"></button>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../script.js"></script>
+</body>
+</html>

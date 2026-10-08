@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../style/home.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">My Dashboard</div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div id="adminNavLinks" style="display: none; gap: 1rem;">
+                <a href="./administration.html" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Admin Panel</a>
+            </div>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <main class="content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <h1 id="welcomeMessage" style="margin: 0;">Welcome!</h1>
+            <div style="display: flex; gap: 1rem;">
+                <a href="./my-requests.html" style="background-color: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.2s;">📋 My Requests</a>
+                <a href="./request.html" style="background-color: #22c55e; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.2s;">+ Request Custom Script</a>
+            </div>
+        </div>
+        
+        <p>Explore our premium components below.</p>
+        <div id="productGrid" class="product-grid"></div>
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../script.js"></script>
+</body>
+</html>

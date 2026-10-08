@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="../style/admin.css">
+</head>
+<body>
+    <div class="admin-wrapper">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3 class="hide-on-fold">Admin Panel</h3>
+                <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+            </div>
+            <ul class="sidebar-links">
+                <li class="active" onclick="switchModule('module-settings', this)" title="Global Settings"><span class="icon">⚙️</span> <span class="hide-on-fold">Global Settings</span></li>
+                <li onclick="switchModule('module-requests', this)" title="Manage Requests"><span class="icon">📋</span> <span class="hide-on-fold">Manage Requests</span></li>
+                <li onclick="switchModule('module-script', this)" title="Manage Script"><span class="icon">📦</span> <span class="hide-on-fold">Manage Script</span></li>
+                <li onclick="switchModule('module-roles', this)" title="User Roles"><span class="icon">👥</span> <span class="hide-on-fold">User Roles</span></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="./home.html" title="Back to Dashboard"><span class="icon">🏠</span> <span class="hide-on-fold">Dashboard</span></a>
+            </div>
+        </nav>
+
+        <main class="admin-main">
+            <!-- Global Settings -->
+            <div id="module-settings" class="admin-module active">
+                <h2>Global Settings</h2>
+                <div class="module-card">
+                    <form id="rateForm">
+                        <h3 style="margin-bottom: 1rem; color: #cbd5e1; font-size: 1.1rem;">Currency Exchange</h3>
+                        <div class="input-group">
+                            <label>1 USD to MMK Rate (Ks)</label>
+                            <input type="number" id="exchangeRate" min="1" step="1" required>
+                        </div>
+                        <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #cbd5e1; font-size: 1.1rem;">AI Request Base Pricing ($)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div class="input-group"><label>Simple</label><input type="number" id="priceSimple" min="1" step="0.01" required></div>
+                            <div class="input-group"><label>Medium</label><input type="number" id="priceMedium" min="1" step="0.01" required></div>
+                            <div class="input-group"><label>Complex</label><input type="number" id="priceComplex" min="1" step="0.01" required></div>
+                        </div>
+                        <button type="submit" class="action-btn" style="background-color: #22c55e;">Save Settings</button>
+                        <p id="rateMessage" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Manage Requests -->
+            <div id="module-requests" class="admin-module" style="display: none;">
+                <h2>Manage Custom Requests</h2>
+                <div id="adminRequestsList" style="display: flex; flex-direction: column; gap: 1rem; max-width: 900px;">
+                    <p style="color: #94a3b8;">Loading requests...</p>
+                </div>
+            </div>
+
+            <!-- Manage Script (Upload / Edit) -->
+            <div id="module-script" class="admin-module" style="display: none;">
+                <h2>Manage Scripts</h2>
+                
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #334155;">
+                    <button id="tab-upload" onclick="switchSubModule('upload-section', this)" style="background: transparent; color: #3b82f6; border: none; border-bottom: 2px solid #3b82f6; padding: 0.5rem 1rem; cursor: pointer; font-weight: bold; font-size: 1rem;">Upload Script</button>
+                    <button id="tab-edit" onclick="switchSubModule('edit-section', this)" style="background: transparent; color: #94a3b8; border: none; border-bottom: 2px solid transparent; padding: 0.5rem 1rem; cursor: pointer; font-weight: bold; font-size: 1rem;">Edit Script</button>
+                </div>
+
+                <!-- Sub-Module: Upload -->
+                <div id="upload-section" class="sub-module-content">
+                    <div class="module-card">
+                        <form id="adminForm">
+                            <div class="input-group"><label>Script Name</label><input type="text" id="prodName" required></div>
+                            <div class="input-group"><label>Price ($)</label><input type="number" id="prodPrice" min="0" step="0.01" required></div>
+                            <div class="input-group"><label>Description</label><input type="text" id="prodDesc" required></div>
+                            <div class="input-group"><label>C# File (.cs)</label><input type="file" id="prodFile" accept=".cs" required style="border: none; padding: 0; background: transparent;"></div>
+                            <button type="submit" id="uploadBtn" class="action-btn">Upload Product</button>
+                            <p id="adminMessage" class="error-message"></p>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Sub-Module: Edit -->
+                <div id="edit-section" class="sub-module-content" style="display: none;">
+                    <div class="module-card" style="max-width: 900px;">
+                        <div id="editProductsList">
+                            <p style="color: #94a3b8;">Loading scripts...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Roles -->
+            <div id="module-roles" class="admin-module" style="display: none;">
+                <h2>User Roles Management</h2>
+                <div class="module-card" style="max-width: 800px;">
+                    <div id="usersList"><p style="color: #94a3b8;">Loading users...</p></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Script Popup Modal -->
+    <div id="editModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: #1e2433; border: 1px solid #334155; border-radius: 8px; padding: 2rem; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 id="editModalTitle" style="color: white; margin-top: 0; margin-bottom: 1.5rem;">Edit Script</h3>
+            
+            <input type="hidden" id="editModalId">
+
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label style="color: #cbd5e1; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Script Name</label>
+                <input type="text" id="editModalName" style="width: 100%; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 4px;" required>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label style="color: #cbd5e1; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Price ($)</label>
+                <input type="number" id="editModalPrice" step="0.01" style="width: 100%; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 4px;" required>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label style="color: #cbd5e1; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Description</label>
+                <textarea id="editModalDesc" rows="3" style="width: 100%; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 4px;" required></textarea>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 1.5rem;">
+                <label style="color: #cbd5e1; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Replace File (.cs) - Leave blank to keep current file</label>
+                <input type="file" id="editModalFile" accept=".cs" style="width: 100%; color: white;">
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="deleteProductFromModal()" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Delete Script</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="closeEditModal()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancel</button>
+                    <button onclick="saveProductFromModal()" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Save</button>
+                </div>
+            </div>
+            <p id="editModalMsg" style="margin-top: 1rem; margin-bottom: 0; font-size: 0.85rem; font-weight: bold; text-align: right;"></p>
+        </div>
+    </div>
+
+    <button id="logoutBtn" style="display: none;"></button>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../script.js"></script>
+</body>
+</html>

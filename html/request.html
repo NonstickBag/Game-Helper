@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Custom Script</title>
+    <link rel="stylesheet" href="../style/index.css">
+    <style>
+        textarea { width: 100%; padding: 0.75rem; border: 1px solid #334155; border-radius: 6px; background-color: #2c2c2c; color: white; font-family: inherit; resize: vertical; }
+        textarea:focus { outline: none; border-color: #3b82f6; }
+        .ai-panel { background-color: #1e1e1e; border: 1px solid #3b82f6; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; display: none; }
+        .code-preview { background-color: #0f172a; padding: 1rem; border-radius: 6px; border: 1px solid #334155; font-family: monospace; color: #34d399; white-space: pre-wrap; max-height: 250px; overflow-y: auto; margin-top: 1rem; font-size: 0.85rem; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="login-container" style="max-width: 600px;">
+        <h2>Request Custom Script</h2>
+        <p style="color: #94a3b8; text-align: center; margin-bottom: 2rem; font-size: 0.9rem;">
+            Describe your Unity script. Our AI will analyze the complexity. Simple scripts are generated instantly!
+        </p>
+        
+        <form id="requestForm">
+            <div class="input-group">
+                <label for="reqTitle">Project Title</label>
+                <input type="text" id="reqTitle" placeholder="e.g., Player Dash Mechanics" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="reqDesc">Detailed Requirements</label>
+                <textarea id="reqDesc" rows="4" placeholder="Explain exactly what the script needs to do..." required></textarea>
+            </div>
+            
+            <button type="button" id="analyzeBtn" style="background-color: #8b5cf6; margin-bottom: 1.5rem;">🤖 Analyze with AI</button>
+            <p id="analyzeMessage" class="error-message" style="margin-top: -1rem; margin-bottom: 1rem; color: #fbbf24;"></p>
+
+            <div id="aiPanel" class="ai-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Complexity:</span>
+                        <h3 id="displayComplexity" style="color: white; text-transform: capitalize; margin-top: 0.2rem;">-</h3>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="color: #94a3b8; font-size: 0.9rem;">Estimated Price:</span>
+                        <h3 id="displayPrice" style="color: #22c55e; margin-top: 0.2rem;">-</h3>
+                    </div>
+                </div>
+
+                <div id="codeContainer" style="display: none;">
+                    <span style="color: #3b82f6; font-weight: bold; font-size: 0.9rem;">✨ Auto-Generated Code:</span>
+                    <div id="codePreview" class="code-preview"></div>
+                </div>
+                
+                <button type="submit" id="submitRequestBtn" style="background-color: #3b82f6; margin-top: 1.5rem;">Confirm & Submit Request</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="./home.html" style="color: #ef4444; text-decoration: none;">Cancel</a>
+            </div>
+        </form>
+        <button id="logoutBtn" style="display: none;"></button>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../script.js"></script>
+</body>
+</html>
