@@ -1,8 +1,8 @@
 // ==========================================
 // 1. INITIALIZE SUPABASE
 // ==========================================
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY; 
+const supabaseUrl = 'https://ezhyiguhutkkvymcfkpj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6aHlpZ3VodXRra3Z5bWNma3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwODU3MDgsImV4cCI6MjEwNjY2MTcwOH0.hUqs8TXz3FL3aEW14y0dHqCYZk4e_xW23-Kdapu_QF0'; 
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
