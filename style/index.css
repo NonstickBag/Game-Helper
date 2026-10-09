@@ -113,3 +113,87 @@ button:hover {
     width: 20px;
     height: 20px;
 }
+
+/* ========================================== */
+/* THEME TOGGLE BUTTON                        */
+/* ========================================== */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    z-index: 9999; /* Keeps it on top of everything */
+    transition: background 0.3s, transform 0.2s;
+}
+
+.theme-toggle:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ========================================== */
+/* LIGHT MODE COLOR OVERRIDES                 */
+/* ========================================== */
+body.light-mode {
+    background-color: #f1f5f9 !important; 
+    color: #0f172a !important; 
+}
+
+/* Convert dark boxes to white boxes */
+body.light-mode .login-container,
+body.light-mode .admin-module,
+body.light-mode .product-card,
+body.light-mode .request-card,
+body.light-mode div[style*="background-color: #1e2433"],
+body.light-mode div[style*="background-color: #1e293b"],
+body.light-mode div[style*="background: #0f172a"] {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Adjust text colors inside boxes */
+body.light-mode label,
+body.light-mode h1, body.light-mode h2, body.light-mode h3, body.light-mode h4,
+body.light-mode p, body.light-mode strong {
+    color: #1e293b !important;
+}
+
+/* Adjust form inputs */
+body.light-mode input,
+body.light-mode select,
+body.light-mode textarea {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Fix sidebar color */
+body.light-mode #sidebar {
+    background-color: #ffffff !important;
+    border-right: 1px solid #e2e8f0 !important;
+}
+body.light-mode .sidebar-links li {
+    color: #475569 !important;
+}
+body.light-mode .sidebar-links li:hover,
+body.light-mode .sidebar-links li.active {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+}
