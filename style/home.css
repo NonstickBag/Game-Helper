@@ -8,7 +8,7 @@ body {
     font-family: system-ui, -apple-system, sans-serif;
     background-color: #121212;
     color: #e0e0e0;
-    display: block; /* Overrides index.css flex */
+    display: block; 
 }
 
 .navbar {
@@ -123,7 +123,7 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    z-index: 9999; /* Keeps it on top of everything */
+    z-index: 9999; 
     transition: background 0.3s, transform 0.2s;
 }
 
@@ -145,25 +145,40 @@ body.light-mode {
     color: #0f172a !important; 
 }
 
-/* Convert dark boxes to white boxes */
+/* Convert dark boxes to white boxes (Added .detail-container and .role-container) */
 body.light-mode .login-container,
 body.light-mode .admin-module,
 body.light-mode .product-card,
 body.light-mode .request-card,
+body.light-mode .detail-container,
+body.light-mode .role-container,
 body.light-mode div[style*="background-color: #1e2433"],
 body.light-mode div[style*="background-color: #1e293b"],
 body.light-mode div[style*="background: #0f172a"] {
     background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
+    border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Adjust text colors inside boxes */
 body.light-mode label,
-body.light-mode h1, body.light-mode h2, body.light-mode h3, body.light-mode h4,
-body.light-mode p, body.light-mode strong {
+body.light-mode h1, 
+body.light-mode h2, 
+body.light-mode h3, 
+body.light-mode h4,
+body.light-mode p, 
+body.light-mode strong,
+body.light-mode .detail-desc {
     color: #1e293b !important;
+}
+
+/* Specific text fixes for Detail Page */
+body.light-mode .detail-container h2 {
+    color: #2563eb !important; 
+}
+body.light-mode .detail-container h2 span {
+    color: #64748b !important; 
 }
 
 /* Adjust form inputs */
