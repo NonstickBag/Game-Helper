@@ -16,7 +16,8 @@ export default async function handler(req, res) {
 
     try {
         // 3. Make the request to Google from the secure server, NOT the browser
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // Updated model name to gemini-1.5-flash-latest to resolve v1beta routing errors
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
