@@ -102,6 +102,12 @@ body {
     background-color: #121212; 
 }
 
+.admin-module {
+    max-width: 750px;
+    margin: 0 auto;
+    width: 100%;
+}
+
 .admin-module h2 { 
     margin-bottom: 2rem; 
     color: white; 
@@ -152,7 +158,7 @@ input:focus { outline: none; border-color: #e11d48; }
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    z-index: 9999; /* Keeps it on top of everything */
+    z-index: 9999; 
     transition: background 0.3s, transform 0.2s;
 }
 
@@ -167,47 +173,25 @@ input:focus { outline: none; border-color: #e11d48; }
 }
 
 /* ========================================== */
-/* LIGHT MODE COLOR OVERRIDES                 */
+/* ADMIN LIGHT MODE OVERRIDES                 */
 /* ========================================== */
 body.light-mode {
     background-color: #f1f5f9 !important; 
     color: #0f172a !important; 
 }
 
-/* Convert dark boxes to white boxes */
-body.light-mode .login-container,
-body.light-mode .admin-module,
-body.light-mode .product-card,
-body.light-mode .request-card,
-body.light-mode div[style*="background-color: #1e2433"],
-body.light-mode div[style*="background-color: #1e293b"],
-body.light-mode div[style*="background: #0f172a"] {
-    background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* 1. Main Background */
+body.light-mode .admin-main {
+    background-color: #f1f5f9 !important;
 }
 
-/* Adjust text colors inside boxes */
-body.light-mode label,
-body.light-mode h1, body.light-mode h2, body.light-mode h3, body.light-mode h4,
-body.light-mode p, body.light-mode strong {
-    color: #1e293b !important;
-}
-
-/* Adjust form inputs */
-body.light-mode input,
-body.light-mode select,
-body.light-mode textarea {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-    border-color: #cbd5e1 !important;
-}
-
-/* Fix sidebar color */
-body.light-mode #sidebar {
+/* 2. Sidebar overrides */
+body.light-mode .sidebar {
     background-color: #ffffff !important;
     border-right: 1px solid #e2e8f0 !important;
+}
+body.light-mode .sidebar-header {
+    border-bottom: 1px solid #e2e8f0 !important;
 }
 body.light-mode .sidebar-links li {
     color: #475569 !important;
@@ -216,4 +200,36 @@ body.light-mode .sidebar-links li:hover,
 body.light-mode .sidebar-links li.active {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
+}
+body.light-mode .sidebar-footer {
+    border-top: 1px solid #e2e8f0 !important;
+}
+body.light-mode .toggle-btn {
+    color: #0f172a !important; 
+}
+
+/* 3. Module Cards */
+body.light-mode .module-card {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 4. Text & Labels */
+body.light-mode h2,
+body.light-mode label,
+body.light-mode .user-row {
+    color: #1e293b !important;
+}
+
+/* 5. Inputs & Selects */
+body.light-mode input,
+body.light-mode .role-select {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+body.light-mode .user-row {
+    border-bottom: 1px solid #e2e8f0 !important;
 }
