@@ -141,7 +141,7 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    z-index: 9999; /* Keeps it on top of everything */
+    z-index: 9999; 
     transition: background 0.3s, transform 0.2s;
 }
 
@@ -163,46 +163,53 @@ body.light-mode {
     color: #0f172a !important; 
 }
 
-/* Convert dark boxes to white boxes */
-body.light-mode .login-container,
-body.light-mode .admin-module,
-body.light-mode .product-card,
-body.light-mode .request-card,
-body.light-mode div[style*="background-color: #1e2433"],
-body.light-mode div[style*="background-color: #1e293b"],
-body.light-mode div[style*="background: #0f172a"] {
+/* Make Payment Containers White */
+body.light-mode .payment-container,
+body.light-mode .pay-card,
+body.light-mode .upload-box {
     background-color: #ffffff !important;
     border-color: #cbd5e1 !important;
-    color: #0f172a !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Adjust text colors inside boxes */
-body.light-mode label,
-body.light-mode h1, body.light-mode h2, body.light-mode h3, body.light-mode h4,
-body.light-mode p, body.light-mode strong {
+/* Highlight Selected Card */
+body.light-mode .pay-card.selected {
+    background-color: #fff1f2 !important; 
+    border-color: #e11d48 !important;
+}
+
+/* Text Adjustments */
+body.light-mode .top-bar h2,
+body.light-mode .step-label,
+body.light-mode .instruction,
+body.light-mode .pay-details h4,
+body.light-mode .notice-text,
+body.light-mode .step-text {
     color: #1e293b !important;
 }
 
-/* Adjust form inputs */
-body.light-mode input,
-body.light-mode select,
-body.light-mode textarea {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-    border-color: #cbd5e1 !important;
+body.light-mode .pay-details .name {
+    color: #64748b !important;
 }
 
-/* Fix sidebar color */
-body.light-mode #sidebar {
-    background-color: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
+/* Back Arrow Fix */
+body.light-mode .back-arrow {
+    color: #1e293b !important;
 }
-body.light-mode .sidebar-links li {
+
+/* Inactive Step Circles */
+body.light-mode .step-circle:not(.active) {
+    background-color: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* Back Button Fix */
+body.light-mode .btn-back {
+    background-color: #e2e8f0 !important;
     color: #475569 !important;
 }
-body.light-mode .sidebar-links li:hover,
-body.light-mode .sidebar-links li.active {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
+
+body.light-mode .btn-back:hover {
+    background-color: #cbd5e1 !important;
 }
