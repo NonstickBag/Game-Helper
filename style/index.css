@@ -80,3 +80,36 @@ button:hover {
     text-align: center;
     min-height: 1.2rem;
 }
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px !important; 
+    box-sizing: border-box; 
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease-in-out;
+}
+
+.toggle-password:hover {
+    color: #ffffff;
+}
+
+.toggle-password svg {
+    width: 20px;
+    height: 20px;
+}
