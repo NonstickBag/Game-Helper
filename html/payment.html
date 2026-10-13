@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Item</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
-    <link rel="stylesheet" href="../style/payment.css?v=v2">
+    <link rel="stylesheet" href="../style/payment.css?v=4">
 </head>
 <body>
     <div class="page-wrapper">
@@ -74,7 +74,7 @@
                 </div>
 
                 <!-- STEP 2: UPLOAD RECEIPT -->
-                <form id="paymentForm" style="display: none;">
+                <form id="paymentForm">
                     <div class="step-header">
                         <p class="step-label">Step 2</p>
                         <p class="instruction">Please upload your transaction screenshot.</p>
@@ -91,25 +91,31 @@
                 </form>
             </div>
 
-            <!-- STEP 3: SUCCESS -->
-            <div id="paymentSuccess" style="display: none;">
-                <h3>Payment Received!</h3>
-                <p style="color: #94a3b8; margin-bottom: 2rem;">Thank you for your purchase. Your C# script is ready.</p>
-                <button id="downloadBtn" class="download-btn">Download Script</button>
+            <!-- STEP 3: SUCCESS (PENDING APPROVAL) -->
+            <div id="paymentSuccess">
+                <h3>Receipt Uploaded!</h3>
+                <p class="success-subtitle">Thank you! We are verifying your transaction.</p>
+                
+                <div class="approval-box">
+                    <p class="approval-status">Status: Pending Admin Approval</p>
+                    <p class="approval-desc">Once our admins verify your payment, your script will automatically unlock in your dashboard.</p>
+                </div>
+
+                <a href="./my-requests.html" class="download-btn">View My Requests</a>
                 <br>
-                <a href="./home.html" style="color: #e11d48; text-decoration: none; font-size: 0.9rem;">Return to Dashboard</a>
+                <a href="./home.html" class="return-link">Return to Dashboard</a>
             </div>
 
-            <button id="logoutBtn" style="display: none;"></button>
+            <button id="logoutBtn">Logout</button>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../script.js"></script>
+    
     <!-- Floating Theme Toggle Button -->
     <button id="themeToggle" class="theme-toggle" aria-label="Toggle Dark/Light Mode">
         <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <!-- Default Moon Icon -->
             <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
         </svg>
     </button>

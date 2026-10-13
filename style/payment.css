@@ -105,15 +105,34 @@ body {
     cursor: not-allowed;
 }
 
-/* Step 2: Upload Box */
+/* Step 2: Upload Box & Form */
+#paymentForm { display: none; }
 .upload-box { border: 2px dashed #334155; border-radius: 12px; padding: 3rem 1rem; text-align: center; background-color: #1e2433; margin: 2rem 0; }
 .upload-box input[type="file"] { width: 100%; color: #94a3b8; }
 
-/* Step 3: Success Screen */
+/* Step 3: Success & Pending Approval Screen */
 #paymentSuccess { display: none; text-align: center; margin-top: 3rem; }
 #paymentSuccess h3 { color: #22c55e; margin-bottom: 1rem; font-size: 1.5rem; }
+.success-subtitle { color: #94a3b8; margin-bottom: 2rem; }
+
+.approval-box {
+    background-color: #3b82f620;
+    border: 1px solid #3b82f6;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+.approval-status { color: #60a5fa; margin: 0; font-weight: bold; }
+.approval-desc { color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem; line-height: 1.4; }
+
 .download-btn { display: inline-block; background-color: #3b82f6; color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 1.5rem; font-size: 1.1rem; text-decoration: none; transition: background-color 0.2s; }
 .download-btn:hover { background-color: #2563eb; }
+
+.return-link { color: #e11d48; text-decoration: none; font-size: 0.9rem; margin-top: 1rem; display: inline-block; }
+.return-link:hover { text-decoration: underline; }
+
+/* Hidden Session Helper Button */
+#logoutBtn { display: none; }
 
 /* Laptop Responsive Grid */
 @media (min-width: 768px) {
@@ -188,8 +207,20 @@ body.light-mode .step-text {
     color: #1e293b !important;
 }
 
-body.light-mode .pay-details .name {
-    color: #64748b !important;
+body.light-mode .pay-details .name,
+body.light-mode .success-subtitle,
+body.light-mode .approval-desc {
+    color: #475569 !important;
+}
+
+/* Pending Approval Box in Light Mode */
+body.light-mode .approval-box {
+    background-color: #eff6ff !important;
+    border-color: #93c5fd !important;
+}
+
+body.light-mode .approval-status {
+    color: #1d4ed8 !important;
 }
 
 /* Back Arrow Fix */
