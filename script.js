@@ -5,8 +5,11 @@ const supabaseUrl = 'https://ezhyiguhutkkvymcfkpj.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6aHlpZ3VodXRra3Z5bWNma3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwODU3MDgsImV4cCI6MjEwNjY2MTcwOH0.hUqs8TXz3FL3aEW14y0dHqCYZk4e_xW23-Kdapu_QF0'; 
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Helper to pack/unpack receipt & approval metadata inside description without needing SQL changes
+// ==========================================
+// HELPER: PACK/UNPACK METADATA (Receipts)
+// ==========================================
 const META_DELIM = '|||META:';
+
 function parseRequestMeta(rawDesc) {
     if (!rawDesc) return { cleanDesc: '', meta: {} };
     const idx = rawDesc.indexOf(META_DELIM);
@@ -449,7 +452,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             analyzeMessage.textContent = '';
             aiPanel.style.display = 'none';
 
-            const prompt = `You are a Unity C# expert. Analyze this script request: Title: ${title}. Description: ${desc}. Classify complexity as exactly "simple", "medium", or "complex". Simple = basic movement, simple triggers. Medium = UI systems, basic AI. Complex = multiplayer, physics. If "simple", write the complete, working C# script for Unity. If not simple, leave the code blank. Return ONLY a valid JSON object in this exact format: {"complexity": "simple", "code": "using UnityEngine; ..."}`;
+            // IMPORTANT UPDATE: The prompt now forces the AI to write the C# script no matter how complex it is
+            const prompt = `You are a Unity C# expert. Analyze this script request: Title: ${title}. Description: ${desc}. Classify complexity as exactly "simple", "medium", or "complex". Simple = basic movement, simple triggers. Medium = UI systems, basic AI. Complex = multiplayer, physics, or machine learning. Always write the complete, fully functional, production-ready C# script for Unity inside the "code" field, regardless of complexity. Return ONLY a valid JSON object in this exact format: {"complexity": "simple", "code": "using UnityEngine; ..."}`;
 
             let retries = 3;
             let success = false;
@@ -486,7 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.getElementById('displayPrice').textContent = `$${evaluatedUsdPrice} (${mmkPrice} Ks)`;
                     
                     const codeContainer = document.getElementById('codeContainer');
-                    if (evaluatedComplexity === 'simple' && generatedCode && generatedCode.trim() !== '') {
+                    if (generatedCode && generatedCode.trim() !== '') {
                         codeContainer.style.display = 'block';
                         document.getElementById('codePreview').textContent = generatedCode;
                     } else {
@@ -528,7 +532,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 complexity: evaluatedComplexity,
                 estimated_price: evaluatedUsdPrice,
                 auto_generated_code: generatedCode,
-                status: evaluatedComplexity === 'simple' && generatedCode ? 'awaiting_payment' : 'pending' 
+                // Status goes straight to awaiting payment because code is always generated now
+                status: generatedCode ? 'awaiting_payment' : 'pending' 
             }]);
 
             if (error) {
