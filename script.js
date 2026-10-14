@@ -6,7 +6,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// HELPER: PACK/UNPACK METADATA (Receipts)
+// HELPER: PACK/UNPACK METADATA
 // ==========================================
 const META_DELIM = '|||META:';
 
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             analyzeMessage.textContent = '';
             aiPanel.style.display = 'none';
 
-            // IMPORTANT UPDATE: The prompt now forces the AI to write the C# script no matter how complex it is
+            // Forces the AI to ALWAYS write the code regardless of complexity
             const prompt = `You are a Unity C# expert. Analyze this script request: Title: ${title}. Description: ${desc}. Classify complexity as exactly "simple", "medium", or "complex". Simple = basic movement, simple triggers. Medium = UI systems, basic AI. Complex = multiplayer, physics, or machine learning. Always write the complete, fully functional, production-ready C# script for Unity inside the "code" field, regardless of complexity. Return ONLY a valid JSON object in this exact format: {"complexity": "simple", "code": "using UnityEngine; ..."}`;
 
             let retries = 3;
@@ -532,7 +532,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 complexity: evaluatedComplexity,
                 estimated_price: evaluatedUsdPrice,
                 auto_generated_code: generatedCode,
-                // Status goes straight to awaiting payment because code is always generated now
                 status: generatedCode ? 'awaiting_payment' : 'pending' 
             }]);
 
@@ -644,7 +643,7 @@ window.loadAdminRequests = async function() {
             let codeSection = '';
             let publishBtn = ''; 
             
-            if (req.auto_generated_code) {
+            if (req.auto_generated_code && req.auto_generated_code.trim() !== '') {
                 codeSection = `
                     <details class="code-details">
                         <summary class="code-summary">View AI Code</summary>
@@ -652,6 +651,22 @@ window.loadAdminRequests = async function() {
                     </details>
                 `;
                 publishBtn = `<button onclick="publishToStore(${req.req_id})" class="btn-publish">🛒 Publish to Store</button>`;
+            } else {
+                // Admin option to upload a manual .cs script if the AI code is empty
+                codeSection = `
+                    <div style="margin: 1rem 0; padding: 1rem; border: 1px dashed #334155; border-radius: 6px; background-color: #0f172a;">
+                        <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 0.5rem; font-weight: bold;">Attach Custom Script (.cs)</p>
+                        <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.75rem;">AI code is empty. Upload your manual script here before approving.</p>
+                        <input type="file" id="manual-upload-${req.req_id}" accept=".cs" class="file-input-clean" style="margin-bottom: 0.5rem; width: 100%; color: white;">
+                        <br>
+                        <button onclick="uploadManualScript(${req.req_id})" style="background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">Upload & Attach</button>
+                        <span id="manual-msg-${req.req_id}" style="margin-left: 1rem; font-size: 0.85rem;"></span>
+                    </div>
+                `;
+                // Show link if a file is already attached
+                if (meta.fileUrl) {
+                    codeSection += `<p style="color: #22c55e; font-size: 0.85rem; font-weight: bold; margin-bottom: 1rem;">✓ Manual Script Attached: <a href="${meta.fileUrl}" target="_blank" style="color: #60a5fa;">View File</a></p>`;
+                }
             }
 
             // Show Receipt Box if the user uploaded a payment screenshot
@@ -696,6 +711,55 @@ window.loadAdminRequests = async function() {
             `;
             adminReqList.appendChild(card);
         });
+    }
+};
+
+// --- Manual Script Upload Handler ---
+window.uploadManualScript = async function(reqId) {
+    const msgSpan = document.getElementById(`manual-msg-${reqId}`);
+    const fileInput = document.getElementById(`manual-upload-${reqId}`);
+    
+    if (!fileInput || fileInput.files.length === 0) {
+        msgSpan.style.color = '#ef4444';
+        msgSpan.textContent = "Please select a .cs file first.";
+        return;
+    }
+
+    msgSpan.style.color = '#fbbf24';
+    msgSpan.textContent = "Uploading...";
+
+    try {
+        const file = fileInput.files[0];
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '');
+        const fileName = `custom-scripts/${Date.now()}_${safeName}`;
+        
+        // Upload to Storage
+        const { error: upErr } = await supabaseClient.storage.from('unity-scripts').upload(fileName, file);
+        if (upErr) throw new Error("Upload failed: " + upErr.message);
+
+        // Get URL
+        const { data: pubData } = supabaseClient.storage.from('unity-scripts').getPublicUrl(fileName);
+        const fileUrl = pubData.publicUrl;
+
+        // Fetch Request to update Metadata
+        const { data: reqData, error: fetchErr } = await supabaseClient.from('requests').select('description').eq('id', reqId).single();
+        if (fetchErr) throw new Error("Failed to fetch request metadata.");
+
+        const { cleanDesc, meta } = parseRequestMeta(reqData.description);
+        meta.fileUrl = fileUrl;
+
+        const updatedDesc = buildRequestDesc(cleanDesc, meta);
+
+        // Save to Database
+        const { error: dbErr } = await supabaseClient.from('requests').update({ description: updatedDesc }).eq('id', reqId);
+        if (dbErr) throw new Error("Failed to save to database: " + dbErr.message);
+
+        msgSpan.style.color = '#22c55e';
+        msgSpan.textContent = "✓ Uploaded Successfully!";
+        setTimeout(() => loadAdminRequests(), 1500);
+    } catch (err) {
+        msgSpan.style.color = '#ef4444';
+        msgSpan.textContent = err.message;
     }
 };
 
