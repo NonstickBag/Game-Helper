@@ -11,6 +11,10 @@ body {
     min-height: 100vh; 
 }
 
+.hidden-module { display: none; }
+#logoutBtn { display: none; }
+.muted-text { color: #94a3b8; }
+
 /* ================= SIDEBAR ================= */
 .sidebar { 
     width: 260px; 
@@ -20,15 +24,11 @@ body {
     flex-direction: column; 
     transition: width 0.3s ease; 
     overflow: hidden;
+    flex-shrink: 0;
 }
 
-/* Folded State */
-.sidebar.folded { 
-    width: 70px; 
-}
-.sidebar.folded .hide-on-fold { 
-    display: none; 
-}
+.sidebar.folded { width: 70px; }
+.sidebar.folded .hide-on-fold { display: none; }
 
 .sidebar-header { 
     padding: 1.5rem 1rem; 
@@ -103,7 +103,7 @@ body {
 }
 
 .admin-module {
-    max-width: 750px;
+    max-width: 850px;
     margin: 0 auto;
     width: 100%;
 }
@@ -122,23 +122,353 @@ body {
     max-width: 600px; 
 }
 
+.module-card.wide-card {
+    max-width: 900px;
+}
+
+.section-subtitle {
+    margin-bottom: 1rem;
+    color: #cbd5e1;
+    font-size: 1.1rem;
+}
+
+.section-subtitle.spaced {
+    margin-top: 2rem;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
 /* Form Inputs */
 .input-group { margin-bottom: 1.5rem; }
 label { display: block; margin-bottom: 0.5rem; font-size: 0.95rem; color: #cbd5e1; }
-input { width: 100%; padding: 0.85rem; border: 1px solid #334155; border-radius: 6px; background-color: #0f172a; color: white; transition: border-color 0.2s; }
-input:focus { outline: none; border-color: #e11d48; }
+input, textarea, select { 
+    width: 100%; 
+    padding: 0.85rem; 
+    border: 1px solid #334155; 
+    border-radius: 6px; 
+    background-color: #0f172a; 
+    color: white; 
+    font-family: inherit;
+    transition: border-color 0.2s; 
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: #e11d48; }
 
-.action-btn { width: 100%; padding: 1rem; background-color: #e11d48; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 1rem; transition: background-color 0.2s; }
+.file-input-clean {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+.action-btn { 
+    width: 100%; 
+    padding: 1rem; 
+    background-color: #e11d48; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    font-size: 1rem; 
+    cursor: pointer; 
+    margin-top: 1rem; 
+    transition: background-color 0.2s; 
+}
 .action-btn:hover { background-color: #be123c; }
+.save-settings-btn { background-color: #22c55e; }
+.save-settings-btn:hover { background-color: #16a34a; }
 
 .error-message { text-align: center; margin-top: 1rem; min-height: 1.2rem; font-size: 0.9rem; }
 
-/* User Role List Overrides */
-.user-row { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 0; border-bottom: 1px solid #334155; }
+/* Sub-Tabs (Upload / Edit) */
+.sub-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #334155;
+}
+
+.sub-tab-btn {
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.sub-tab-btn.active {
+    color: #3b82f6;
+    border-bottom: 2px solid #3b82f6;
+}
+
+/* ================= REQUESTS & PAYMENT APPROVAL CARDS ================= */
+.requests-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 900px;
+}
+
+.admin-req-card {
+    background-color: #1e2433;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #334155;
+}
+
+.admin-req-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.admin-req-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.admin-req-meta {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+}
+
+.admin-req-desc {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.code-details {
+    margin: 1rem 0;
+}
+
+.code-summary {
+    cursor: pointer;
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.code-pre {
+    background: #0f172a;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    color: #34d399;
+    margin-top: 0.5rem;
+    border: 1px solid #334155;
+}
+
+/* Receipt Preview Box */
+.receipt-box {
+    background-color: #0f172a;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.receipt-title {
+    color: #60a5fa;
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.receipt-link {
+    color: #3b82f6;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+.receipt-link:hover { text-decoration: underline; }
+
+.receipt-img {
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    display: block;
+}
+
+/* Admin Request Actions Bar */
+.admin-req-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-top: 1px solid #334155;
+    padding-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.status-select {
+    width: auto;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: white;
+}
+
+.btn-Approve {
+    background-color: #22c55e;
+    color: white;
+    border: none;
+    padding: 0.55rem 1.1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.btn-Approve:hover { background-color: #16a34a; }
+
+.btn-Disapprove {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.55rem 1.1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.btn-Disapprove:hover { background-color: #dc2626; }
+
+.btn-save-status {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.btn-save-status:hover { background-color: #2563eb; }
+
+.btn-publish {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-left: auto;
+}
+.btn-publish:hover { background-color: #059669; }
+
+/* ================= EDIT SCRIPTS & USER ROLES ================= */
+.admin-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f172a;
+    padding: 1rem;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.user-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 1rem; 
+    border-bottom: 1px solid #334155; 
+}
 .user-row:last-child { border-bottom: none; }
-.role-select { padding: 0.6rem; background: #0f172a; color: white; border: 1px solid #334155; border-radius: 4px; outline: none; }
-.update-btn { padding: 0.6rem 1.2rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 1rem; transition: background-color 0.2s; }
-.update-btn:hover { background: #2563eb; }
+
+/* ================= POPUP MODAL ================= */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-box {
+    background: #1e2433;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.modal-title {
+    color: white;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+}
+
+.modal-actions-right {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal-msg {
+    margin-top: 1rem;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-align: right;
+}
 
 /* ========================================== */
 /* THEME TOGGLE BUTTON                        */
@@ -180,12 +510,10 @@ body.light-mode {
     color: #0f172a !important; 
 }
 
-/* 1. Main Background */
 body.light-mode .admin-main {
     background-color: #f1f5f9 !important;
 }
 
-/* 2. Sidebar overrides */
 body.light-mode .sidebar {
     background-color: #ffffff !important;
     border-right: 1px solid #e2e8f0 !important;
@@ -208,28 +536,42 @@ body.light-mode .toggle-btn {
     color: #0f172a !important; 
 }
 
-/* 3. Module Cards */
-body.light-mode .module-card {
+body.light-mode .module-card,
+body.light-mode .admin-req-card,
+body.light-mode .modal-box {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* 4. Text & Labels */
+body.light-mode .admin-list-item,
+body.light-mode .receipt-box {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
 body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
 body.light-mode label,
+body.light-mode strong,
+body.light-mode .section-subtitle,
+body.light-mode .admin-req-desc,
 body.light-mode .user-row {
     color: #1e293b !important;
 }
 
-/* 5. Inputs & Selects */
 body.light-mode input,
-body.light-mode .role-select {
+body.light-mode textarea,
+body.light-mode select,
+body.light-mode .status-select {
     background-color: #f8fafc !important;
     color: #0f172a !important;
     border-color: #94a3b8 !important;
 }
 
-body.light-mode .user-row {
-    border-bottom: 1px solid #e2e8f0 !important;
+body.light-mode .user-row,
+body.light-mode .admin-req-actions,
+body.light-mode .sub-tabs {
+    border-color: #e2e8f0 !important;
 }

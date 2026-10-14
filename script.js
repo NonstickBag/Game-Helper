@@ -5,6 +5,25 @@ const supabaseUrl = 'https://ezhyiguhutkkvymcfkpj.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6aHlpZ3VodXRra3Z5bWNma3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwODU3MDgsImV4cCI6MjEwNjY2MTcwOH0.hUqs8TXz3FL3aEW14y0dHqCYZk4e_xW23-Kdapu_QF0'; 
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+// Helper to pack/unpack receipt & approval metadata inside description without needing SQL changes
+const META_DELIM = '|||META:';
+function parseRequestMeta(rawDesc) {
+    if (!rawDesc) return { cleanDesc: '', meta: {} };
+    const idx = rawDesc.indexOf(META_DELIM);
+    if (idx === -1) return { cleanDesc: rawDesc, meta: {} };
+    const cleanDesc = rawDesc.substring(0, idx);
+    try {
+        const meta = JSON.parse(rawDesc.substring(idx + META_DELIM.length));
+        return { cleanDesc, meta };
+    } catch (e) {
+        return { cleanDesc, meta: {} };
+    }
+}
+
+function buildRequestDesc(cleanDesc, metaObj) {
+    return `${cleanDesc}${META_DELIM}${JSON.stringify(metaObj)}`;
+}
+
 // ==========================================
 // 2. MAIN EVENT LISTENER (Handles all pages)
 // ==========================================
@@ -149,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Payment Page (MANUAL APPROVAL FLOW) ---
+    // --- Payment Page (Manual Admin Verification Flow) ---
     const paymentForm = document.getElementById('paymentForm');
     if (paymentForm) {
         const settings = await getStoreSettings();
@@ -182,27 +201,72 @@ document.addEventListener('DOMContentLoaded', async () => {
             submitBtn.textContent = 'Uploading Receipt...';
             submitBtn.disabled = true;
 
-            // 1. Upload receipt to Supabase Storage
-            const fileInput = document.getElementById('receiptFile');
-            if (fileInput && fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const fileName = `receipts/${Date.now()}_${file.name}`;
-                await supabaseClient.storage.from('unity-scripts').upload(fileName, file);
-            }
-            
-            // 2. Change Request status to 'processing' (Pending Admin Approval)
-            if (isRequest && item) {
-                const { error } = await supabaseClient.from('requests').update({ status: 'processing' }).eq('id', item.id);
-                if (error) console.error("Failed to update status to processing.");
-            }
+            try {
+                // 1. Upload receipt image to Supabase Storage and get public URL
+                let receiptUrl = '';
+                const fileInput = document.getElementById('receiptFile');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '');
+                    const fileName = `receipts/${Date.now()}_${safeName}`;
+                    const { error: upErr } = await supabaseClient.storage.from('unity-scripts').upload(fileName, file);
+                    if (upErr) throw new Error("Receipt upload failed: " + upErr.message);
 
-            // 3. Show "Pending Approval" success screen
-            document.getElementById('paymentFormContainer').style.display = 'none';
-            document.getElementById('paymentSuccess').style.display = 'block';
+                    const { data: pubData } = supabaseClient.storage.from('unity-scripts').getPublicUrl(fileName);
+                    receiptUrl = pubData.publicUrl;
+                }
+
+                // 2. Save receipt & set status to 'processing' so Admin can Approve or Disapprove
+                if (isRequest && item) {
+                    const { cleanDesc, meta } = parseRequestMeta(item.description);
+                    meta.receiptUrl = receiptUrl;
+                    meta.disapproved = false;
+                    meta.paymentMethod = window.selectedPaymentMethod || 'manual';
+
+                    const updatedDesc = buildRequestDesc(cleanDesc, meta);
+                    const { error } = await supabaseClient
+                        .from('requests')
+                        .update({ status: 'processing', description: updatedDesc })
+                        .eq('id', item.id);
+                    if (error) throw new Error(error.message);
+                } else if (item) {
+                    // Store Product purchase -> create a request record so Admin can Approve/Disapprove it
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (!session) throw new Error("Please log in to complete your purchase.");
+
+                    const meta = {
+                        receiptUrl: receiptUrl,
+                        fileUrl: item.file_url,
+                        isStorePurchase: true,
+                        disapproved: false,
+                        paymentMethod: window.selectedPaymentMethod || 'manual'
+                    };
+                    const updatedDesc = buildRequestDesc(item.description, meta);
+
+                    const { error } = await supabaseClient.from('requests').insert([{
+                        user_id: session.user.id,
+                        title: `[Store] ${item.name}`,
+                        description: updatedDesc,
+                        complexity: 'simple',
+                        estimated_price: item.price,
+                        auto_generated_code: '',
+                        status: 'processing'
+                    }]);
+                    if (error) throw new Error(error.message);
+                }
+
+                // 3. Show Step 3 Pending Approval Screen
+                document.getElementById('paymentFormContainer').style.display = 'none';
+                document.getElementById('paymentSuccess').style.display = 'block';
+            } catch (err) {
+                alert(err.message);
+                submitBtn.textContent = 'CONFIRM';
+                submitBtn.disabled = false;
+            }
         });
     }
 
-    // --- My Requests Page ---
+    // --- My Requests Page (User View) ---
     const myRequestsList = document.getElementById('myRequestsList');
     if (myRequestsList) {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -210,24 +274,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data: reqs, error } = await supabaseClient.from('requests').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
             
             if (error) myRequestsList.innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
-            else if (reqs.length === 0) myRequestsList.innerHTML = `<p style="color: #94a3b8;">You haven't requested any custom scripts yet.</p>`;
+            else if (reqs.length === 0) myRequestsList.innerHTML = `<p style="color: #94a3b8;">You haven't requested or purchased any scripts yet.</p>`;
             else {
                 myRequestsList.innerHTML = '';
                 reqs.forEach(req => {
+                    const { cleanDesc, meta } = parseRequestMeta(req.description);
+                    const isDisapproved = req.status === 'awaiting_payment' && meta.disapproved;
+
                     let badgeColor = '';
-                    if (req.status === 'awaiting_payment') badgeColor = 'background-color: #8b5cf620; color: #a78bfa;'; 
-                    else if (req.status === 'pending') badgeColor = 'background-color: #f59e0b20; color: #fbbf24;'; 
-                    else if (req.status === 'completed') badgeColor = 'background-color: #22c55e20; color: #4ade80;'; 
-                    else if (req.status === 'processing') badgeColor = 'background-color: #3b82f620; color: #60a5fa;'; 
+                    let badgeText = req.status.replace('_', ' ');
+
+                    if (isDisapproved) {
+                        badgeColor = 'background-color: #ef444420; color: #f87171; border: 1px solid #ef4444;';
+                        badgeText = 'payment disapproved';
+                    } else if (req.status === 'awaiting_payment') {
+                        badgeColor = 'background-color: #8b5cf620; color: #a78bfa;';
+                    } else if (req.status === 'pending') {
+                        badgeColor = 'background-color: #f59e0b20; color: #fbbf24;';
+                    } else if (req.status === 'completed') {
+                        badgeColor = 'background-color: #22c55e20; color: #4ade80;';
+                        badgeText = 'approved & completed';
+                    } else if (req.status === 'processing') {
+                        badgeColor = 'background-color: #3b82f620; color: #60a5fa;';
+                        badgeText = meta.receiptUrl ? 'pending admin approval' : 'processing';
+                    }
                     
                     let actionHtml = '';
-                    if (req.status === 'awaiting_payment') {
+                    if (isDisapproved) {
+                        actionHtml = `
+                            <p style="color: #ef4444; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.75rem;">
+                                ✕ Your payment receipt was disapproved by the admin. Please upload a valid transaction receipt.
+                            </p>
+                            <button class="dl-btn" style="background-color: #ef4444;" onclick="window.location.href='payment.html?req_id=${req.id}'">
+                                💳 Re-upload Payment Receipt ($${req.estimated_price})
+                            </button>
+                        `;
+                    } else if (req.status === 'awaiting_payment') {
                         actionHtml = `<button class="dl-btn" style="background-color: #8b5cf6;" onclick="window.location.href='payment.html?req_id=${req.id}'">💳 Pay $${req.estimated_price} to Unlock</button>`;
-                    } else if (req.status === 'completed' && req.auto_generated_code && req.auto_generated_code.trim() !== '') {
-                        const safeCode = req.auto_generated_code.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, "\\n");
-                        actionHtml = `<button class="dl-btn" onclick="downloadCSFile('${req.title}', '${safeCode}')">Download Script (.cs)</button>`;
+                    } else if (req.status === 'processing' && meta.receiptUrl) {
+                        actionHtml = `<p style="color: #60a5fa; font-size: 0.9rem; font-weight: bold;">⏳ Receipt uploaded! Waiting for admin payment approval to unlock download.</p>`;
                     } else if (req.status === 'completed') {
-                        actionHtml = `<p style="color: #22c55e; font-size: 0.9rem; font-weight: bold;">Your script is ready! Check the main store catalog to purchase.</p>`;
+                        if (req.auto_generated_code && req.auto_generated_code.trim() !== '') {
+                            const safeCode = req.auto_generated_code.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, "\\n");
+                            actionHtml = `<button class="dl-btn" onclick="downloadCSFile('${req.title}', '${safeCode}')">⬇️ Download Script (.cs)</button>`;
+                        } else if (meta.fileUrl) {
+                            actionHtml = `<button class="dl-btn" onclick="window.open('${meta.fileUrl}', '_blank')">⬇️ Download Script (.cs)</button>`;
+                        } else {
+                            actionHtml = `<p style="color: #22c55e; font-size: 0.9rem; font-weight: bold;">✓ Payment Approved! Check the store catalog or contact admin for delivery.</p>`;
+                        }
                     }
 
                     const card = document.createElement('div');
@@ -236,11 +330,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="req-header">
                             <div>
                                 <h3 style="margin-bottom: 0.5rem; color: white;">${req.title}</h3>
-                                <span style="color: #94a3b8; font-size: 0.9rem;">Complexity: <strong style="color: white; text-transform: capitalize;">${req.complexity}</strong> | Est. Price: <strong style="color: white;">$${req.estimated_price}</strong></span>
+                                <span style="color: #94a3b8; font-size: 0.9rem;">Complexity: <strong style="color: white; text-transform: capitalize;">${req.complexity}</strong> | Price: <strong style="color: white;">$${req.estimated_price}</strong></span>
                             </div>
-                            <span class="status-badge" style="padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; ${badgeColor}">${req.status.replace('_', ' ')}</span>
+                            <span class="status-badge" style="padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; ${badgeColor}">${badgeText}</span>
                         </div>
-                        <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">${req.description}</p>
+                        <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">${cleanDesc}</p>
                         <div>${actionHtml}</div>
                     `;
                     myRequestsList.appendChild(card);
@@ -252,50 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Administration Load Data & Request Listing ---
     const adminReqList = document.getElementById('adminRequestsList');
     if (adminReqList) {
-        const { data: reqs, error } = await supabaseClient.rpc('get_all_requests_admin');
-        if (error) {
-            adminReqList.innerHTML = `<p style="color: #ef4444;">Error loading requests: ${error.message}</p>`;
-        } else if (!reqs || reqs.length === 0) {
-            adminReqList.innerHTML = `<p style="color: #94a3b8;">No custom requests found.</p>`;
-        } else {
-            adminReqList.innerHTML = '';
-            reqs.forEach(req => {
-                const card = document.createElement('div');
-                card.style.backgroundColor = '#1e2433';
-                card.style.padding = '1.5rem';
-                card.style.borderRadius = '8px';
-                card.style.border = '1px solid #334155';
-                
-                let codeSection = '';
-                let publishBtn = ''; 
-                
-                if (req.auto_generated_code) {
-                    codeSection = `<details style="margin-top: 1rem; margin-bottom: 1rem;"><summary style="cursor: pointer; color: #3b82f6;">View AI Code</summary><pre style="background: #0f172a; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; color: #34d399; margin-top: 0.5rem;">${req.auto_generated_code}</pre></details>`;
-                    publishBtn = `<button onclick="publishToStore(${req.req_id})" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-left: auto;">🛒 Publish to Store</button>`;
-                }
-
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                        <h3 style="color: white; margin: 0;">${req.title}</h3>
-                        <span style="font-size: 0.85rem; color: #94a3b8;">${new Date(req.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem;">From: <strong style="color: white;">${req.user_name}</strong> | Comp: <strong>${req.complexity}</strong> | $${req.estimated_price}</p>
-                    <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1rem;">${req.description}</p>
-                    ${codeSection}
-                    <div style="display: flex; align-items: center; gap: 1rem; border-top: 1px solid #334155; padding-top: 1rem; flex-wrap: wrap;">
-                        <select id="status-${req.req_id}" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white;">
-                            <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>Pending</option>
-                            <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>Processing</option>
-                            <option value="awaiting_payment" ${req.status === 'awaiting_payment' ? 'selected' : ''}>Awaiting Payment</option>
-                            <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>Completed</option>
-                        </select>
-                        <button onclick="updateRequestStatus(${req.req_id})" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Save Status</button>
-                        ${publishBtn}
-                    </div>
-                `;
-                adminReqList.appendChild(card);
-            });
-        }
+        loadAdminRequests();
     }
 
     const editProductsList = document.getElementById('editProductsList');
@@ -308,28 +359,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (error) {
             usersList.innerHTML = `<p style="color: #ef4444;">Error loading users: ${error.message}</p>`;
         } else if (!users || users.length === 0) {
-            usersList.innerHTML = `<p style="color: #94a3b8;">No users found.</p>`;
+            usersList.innerHTML = `<p class="muted-text">No users found.</p>`;
         } else {
             usersList.innerHTML = ''; 
             users.forEach(user => {
                 const row = document.createElement('div');
-                row.style.display = 'flex';
-                row.style.justifyContent = 'space-between';
-                row.style.alignItems = 'center';
-                row.style.padding = '1rem';
-                row.style.borderBottom = '1px solid #334155';
-                
+                row.className = 'user-row';
                 row.innerHTML = `
                     <div>
-                        <strong style="color: white;">${user.full_name}</strong>
+                        <strong>${user.full_name}</strong>
                         <div style="font-size: 0.8rem; color: #888;">ID: ${user.id}</div>
                     </div>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <select id="role-${user.id}" style="padding: 0.5rem; background: #0f172a; color: white; border: 1px solid #334155; border-radius: 4px;">
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <select id="role-${user.id}" class="status-select">
                             <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
                             <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
                         </select>
-                        <button onclick="updateUserRole('${user.id}')" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Save</button>
+                        <button onclick="updateUserRole('${user.id}')" class="btn-save-status">Save</button>
                     </div>
                 `;
                 usersList.appendChild(row);
@@ -573,6 +619,125 @@ async function checkUserSession() {
     }
 }
 
+// --- Load Admin Requests & Payment Approvals ---
+window.loadAdminRequests = async function() {
+    const adminReqList = document.getElementById('adminRequestsList');
+    if (!adminReqList) return;
+
+    const { data: reqs, error } = await supabaseClient.rpc('get_all_requests_admin');
+    if (error) {
+        adminReqList.innerHTML = `<p style="color: #ef4444;">Error loading requests: ${error.message}</p>`;
+    } else if (!reqs || reqs.length === 0) {
+        adminReqList.innerHTML = `<p class="muted-text">No custom requests or payments found.</p>`;
+    } else {
+        adminReqList.innerHTML = '';
+        reqs.forEach(req => {
+            const { cleanDesc, meta } = parseRequestMeta(req.description);
+            const card = document.createElement('div');
+            card.className = 'admin-req-card';
+            
+            let codeSection = '';
+            let publishBtn = ''; 
+            
+            if (req.auto_generated_code) {
+                codeSection = `
+                    <details class="code-details">
+                        <summary class="code-summary">View AI Code</summary>
+                        <pre class="code-pre">${req.auto_generated_code}</pre>
+                    </details>
+                `;
+                publishBtn = `<button onclick="publishToStore(${req.req_id})" class="btn-publish">🛒 Publish to Store</button>`;
+            }
+
+            // Show Receipt Box if the user uploaded a payment screenshot
+            let receiptSection = '';
+            if (meta.receiptUrl) {
+                receiptSection = `
+                    <div class="receipt-box">
+                        <div class="receipt-header">
+                            <span class="receipt-title">🧾 Payment Receipt (${(meta.paymentMethod || 'Transfer').toUpperCase()})</span>
+                            <a href="${meta.receiptUrl}" target="_blank" class="receipt-link">Open Full Image ↗</a>
+                        </div>
+                        <img src="${meta.receiptUrl}" alt="Payment Receipt" class="receipt-img">
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="admin-req-header">
+                    <h3>${req.title}</h3>
+                    <span class="muted-text" style="font-size: 0.85rem;">${new Date(req.created_at).toLocaleDateString()}</span>
+                </div>
+                <p class="admin-req-meta">
+                    From: <strong>${req.user_name}</strong> | Comp: <strong>${req.complexity}</strong> | <strong>$${req.estimated_price}</strong>
+                    ${meta.disapproved ? ' | <span style="color: #ef4444; font-weight: bold;">[DISAPPROVED]</span>' : ''}
+                </p>
+                <p class="admin-req-desc">${cleanDesc}</p>
+                ${receiptSection}
+                ${codeSection}
+                <div class="admin-req-actions">
+                    <button onclick="handlePaymentDecision(${req.req_id}, 'approve')" class="btn-Approve">✓ Approve</button>
+                    <button onclick="handlePaymentDecision(${req.req_id}, 'disapprove')" class="btn-Disapprove">✕ Disapprove</button>
+                    
+                    <select id="status-${req.req_id}" class="status-select">
+                        <option value="pending" ${req.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="processing" ${req.status === 'processing' ? 'selected' : ''}>Processing (Waiting Approval)</option>
+                        <option value="awaiting_payment" ${req.status === 'awaiting_payment' ? 'selected' : ''}>Awaiting Payment</option>
+                        <option value="completed" ${req.status === 'completed' ? 'selected' : ''}>Completed (Approved)</option>
+                    </select>
+                    <button onclick="updateRequestStatus(${req.req_id})" class="btn-save-status">Save Status</button>
+                    ${publishBtn}
+                </div>
+            `;
+            adminReqList.appendChild(card);
+        });
+    }
+};
+
+// --- Approve / Disapprove Handler ---
+window.handlePaymentDecision = async function(reqId, decision) {
+    try {
+        const { data: reqData, error: fetchErr } = await supabaseClient
+            .from('requests')
+            .select('description')
+            .eq('id', reqId)
+            .single();
+
+        if (fetchErr || !reqData) throw new Error("Could not find request record.");
+
+        const { cleanDesc, meta } = parseRequestMeta(reqData.description);
+        let newStatus = 'completed';
+
+        if (decision === 'approve') {
+            meta.disapproved = false;
+            newStatus = 'completed';
+        } else {
+            meta.disapproved = true;
+            newStatus = 'awaiting_payment';
+        }
+
+        const updatedDesc = buildRequestDesc(cleanDesc, meta);
+        const { data, error } = await supabaseClient
+            .from('requests')
+            .update({ status: newStatus, description: updatedDesc })
+            .eq('id', reqId)
+            .select();
+
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) throw new Error("Update blocked by database permissions.");
+
+        if (decision === 'approve') {
+            alert("✓ Payment Approved! The download is now unlocked for the user.");
+        } else {
+            alert("✕ Payment Disapproved. The download remains locked and the user has been asked to re-upload a valid receipt.");
+        }
+
+        loadAdminRequests();
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+};
+
 window.updateUserRole = async function(userId) {
     const newRole = document.getElementById(`role-${userId}`).value;
     const { data, error } = await supabaseClient.rpc('update_user_role_admin', { target_id: userId, new_role: newRole });
@@ -585,7 +750,10 @@ window.updateRequestStatus = async function(reqId) {
     const { data, error } = await supabaseClient.from('requests').update({ status: newStatus }).eq('id', reqId).select();
     if (error) alert("Failed to update status: " + error.message);
     else if (!data || data.length === 0) alert("Update blocked by database permissions. Please run the SQL fix.");
-    else alert("Status updated successfully!");
+    else {
+        alert("Status updated successfully!");
+        loadAdminRequests();
+    }
 };
 
 // ==========================================
@@ -601,28 +769,20 @@ window.loadAdminProducts = async function() {
         return;
     }
     if (products.length === 0) {
-        editList.innerHTML = `<p style="color: #94a3b8;">No scripts uploaded yet.</p>`;
+        editList.innerHTML = `<p class="muted-text">No scripts uploaded yet.</p>`;
         return;
     }
 
     editList.innerHTML = '';
     products.forEach(p => {
         const div = document.createElement('div');
-        div.style.display = 'flex';
-        div.style.justifyContent = 'space-between';
-        div.style.alignItems = 'center';
-        div.style.background = '#0f172a';
-        div.style.padding = '1rem';
-        div.style.border = '1px solid #334155';
-        div.style.borderRadius = '6px';
-        div.style.marginBottom = '1rem';
-        
+        div.className = 'admin-list-item';
         div.innerHTML = `
             <div>
-                <h4 style="color: white; margin: 0 0 0.25rem 0;">${p.name}</h4>
-                <span style="color: #94a3b8; font-size: 0.85rem;">Price: $${p.price}</span>
+                <h4 style="margin: 0 0 0.25rem 0;">${p.name}</h4>
+                <span class="muted-text" style="font-size: 0.85rem;">Price: $${p.price}</span>
             </div>
-            <button onclick="openEditModal(${p.id})" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">Edit</button>
+            <button onclick="openEditModal(${p.id})" class="btn-save-status">Edit</button>
         `;
         editList.appendChild(div);
     });
@@ -630,7 +790,7 @@ window.loadAdminProducts = async function() {
 
 window.openEditModal = async function(id) {
     const numericId = parseInt(id);
-    const { data: p, error } = await supabaseClient.from('products').select('*').eq('id', numericId).single();
+    const { data: p } = await supabaseClient.from('products').select('*').eq('id', numericId).single();
     if (p) {
         document.getElementById('editModalId').value = p.id;
         document.getElementById('editModalTitle').textContent = `Edit: ${p.name}`;
@@ -715,13 +875,15 @@ window.publishToStore = async function(reqId) {
         if (fetchErr || !req) throw new Error("Could not fetch the request data.");
         if (!req.auto_generated_code) throw new Error("No auto-generated code available to publish.");
 
+        const { cleanDesc } = parseRequestMeta(req.description);
+
         const priceInput = prompt(`Edit the store price (USD) for "${req.title}":`, req.estimated_price);
         if (priceInput === null) return; 
 
         const finalPrice = parseFloat(priceInput);
         if (isNaN(finalPrice) || finalPrice < 0) throw new Error("Invalid price. Publishing cancelled.");
 
-        const descInput = prompt(`Edit the description for "${req.title}":`, req.description);
+        const descInput = prompt(`Edit the description for "${req.title}":`, cleanDesc);
         if (descInput === null) return;
         const finalDesc = descInput.trim();
 
@@ -822,12 +984,8 @@ window.switchSubModule = function(sectionId, clickedElement) {
     document.getElementById('upload-section').style.display = 'none';
     document.getElementById('edit-section').style.display = 'none';
     
-    document.getElementById('tab-upload').style.color = '#94a3b8';
-    document.getElementById('tab-upload').style.borderBottom = '2px solid transparent';
-    document.getElementById('tab-edit').style.color = '#94a3b8';
-    document.getElementById('tab-edit').style.borderBottom = '2px solid transparent';
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
     
     document.getElementById(sectionId).style.display = 'block';
-    clickedElement.style.color = '#3b82f6';
-    clickedElement.style.borderBottom = '2px solid #3b82f6';
+    clickedElement.classList.add('active');
 };
